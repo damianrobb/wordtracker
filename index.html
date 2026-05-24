@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Word Tracker">
+  <meta name="theme-color" content="#f5f0e8">
+  <title>Word Tracker</title>
+  <link rel="manifest" href="manifest.json?v=3">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f0e8;
+      --surface: #ffffff;
+      --text: #1a1a1a;
+      --text-muted: #999;
+      --border: rgba(0,0,0,0.1);
+      --radius: 10px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+    }
+
+    .app {
+      min-height: 100dvh;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: env(safe-area-inset-top, 16px) 16px env(safe-area-inset-bottom, 24px);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .header { text-align: center; padding-top: 8px; }
+    .header h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; color: var(--text); }
+    .month-badge {
+      display: inline-block; margin-top: 6px;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.8px;
+      text-transform: uppercase; padding: 3px 12px; border-radius: 20px;
+    }
+
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .stat { border-radius: var(--radius); padding: 12px 8px; text-align: center; }
+    .stat-num { font-size: 26px; font-weight: 600; line-height: 1; }
+    .stat-label { font-size: 11px; margin-top: 3px; opacity: 0.65; }
+
+    .month-nav {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .month-nav button {
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: var(--radius); width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--text); font-size: 18px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .month-nav button:active { opacity: 0.5; }
+    .month-title { font-size: 17px; font-weight: 600; color: var(--text); }
+
+    .weekdays {
+      display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;
+      margin-bottom: 4px;
+    }
+    .weekday {
+      text-align: center; font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted);
+      padding: 2px 0;
+    }
+    .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+    .day {
+      aspect-ratio: 1; border-radius: 8px;
+      border: 0.5px solid var(--border);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      cursor: pointer; background: var(--surface);
+      transition: transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .day:active { transform: scale(0.85); }
+    .day.empty { border: none; background: none; cursor: default; pointer-events: none; }
+    .day.today { border-width: 1.5px; }
+    .day-num { font-size: 12px; line-height: 1; color: var(--text-muted); }
+    .day.today .day-num { font-weight: 600; }
+    .check { font-size: 14px; line-height: 1; margin-top: 1px; }
+
+    .streak-section { }
+    .streak-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 6px; }
+    .streak-dots { display: flex; gap: 3px; flex-wrap: wrap; }
+    .streak-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(0,0,0,0.12); }
+
+    .toast {
+      position: fixed; bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
+      left: 50%; transform: translateX(-50%);
+      padding: 10px 20px; border-radius: 20px;
+      font-size: 14px; font-weight: 500;
+      opacity: 0; transition: opacity 0.25s;
+      pointer-events: none; white-space: nowrap; z-index: 999;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>1000 words a day</h1>
+    <div class="month-badge" id="month-badge"></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat" id="stat-box-total"><div class="stat-num" id="stat-total">0</div><div class="stat-label">written</div></div>
+    <div class="stat" id="stat-box-streak"><div class="stat-num" id="stat-streak">0</div><div class="stat-label">streak</div></div>
+    <div class="stat" id="stat-box-month"><div class="stat-num" id="stat-month">0</div><div class="stat-label">this month</div></div>
+  </div>
+
+  <div class="month-nav">
+    <button id="prev-btn" aria-label="Previous month"><i class="ti ti-chevron-left"></i></button>
+    <div class="month-title" id="month-title"></div>
+    <button id="next-btn" aria-label="Next month"><i class="ti ti-chevron-right"></i></button>
+  </div>
+
+  <div>
+    <div class="weekdays">
+      <div class="weekday">S</div><div class="weekday">M</div><div class="weekday">T</div>
+      <div class="weekday">W</div><div class="weekday">T</div><div class="weekday">F</div>
+      <div class="weekday">S</div>
+    </div>
+    <div class="grid" id="cal-grid"></div>
+  </div>
+
+  <div class="streak-section">
+    <div class="streak-label">month so far</div>
+    <div class="streak-dots" id="streak-dots"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PALETTES = [
+  { fill:'#224363', accent:'#f3e6a7', statBg:'#ddeaf5', statNum:'#224363', badgeBg:'#d0e3f2', badgeText:'#1a3350' },
+  { fill:'#5a3a6e', accent:'#d4a0c8', statBg:'#ecdaf5', statNum:'#5a3a6e', badgeBg:'#e8d5f0', badgeText:'#4a2a5e' },
+  { fill:'#005347', accent:'#f3e6a7', statBg:'#cde8e2', statNum:'#005347', badgeBg:'#c4e8e2', badgeText:'#003d34' },
+  { fill:'#4a4160', accent:'#c9a0c0', statBg:'#ddd9ec', statNum:'#4a4160', badgeBg:'#ddd9ec', badgeText:'#3a3050' },
+  { fill:'#80321e', accent:'#f3e6a7', statBg:'#f0d4cc', statNum:'#80321e', badgeBg:'#f0d4cc', badgeText:'#6a2818' },
+  { fill:'#224363', accent:'#c9a0c0', statBg:'#ddeaf5', statNum:'#224363', badgeBg:'#d0e3f2', badgeText:'#1a3350' },
+  { fill:'#0d6b50', accent:'#fedc97', statBg:'#c0e8dc', statNum:'#0d6b50', badgeBg:'#c0e8dc', badgeText:'#0a5040' },
+  { fill:'#80321e', accent:'#c9a0c0', statBg:'#f0d4cc', statNum:'#80321e', badgeBg:'#f0d4cc', badgeText:'#6a2818' },
+  { fill:'#4a4160', accent:'#fedc97', statBg:'#ddd9ec', statNum:'#4a4160', badgeBg:'#ddd9ec', badgeText:'#3a3050' },
+  { fill:'#b85e10', accent:'#f3e6a7', statBg:'#f8dfc0', statNum:'#b85e10', badgeBg:'#f8dfc0', badgeText:'#9a4e0c' },
+  { fill:'#28666e', accent:'#fedc97', statBg:'#c4e4e8', statNum:'#28666e', badgeBg:'#c4e4e8', badgeText:'#1e5058' },
+  { fill:'#3a2d58', accent:'#f3e6a7', statBg:'#d8d0ee', statNum:'#3a2d58', badgeBg:'#d8d0ee', badgeText:'#2e2448' },
+];
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const KEY = 'damian_1k_v3';
+let written = new Set(JSON.parse(localStorage.getItem(KEY) || '[]'));
+const today = new Date(); today.setHours(0,0,0,0);
+let viewYear = today.getFullYear();
+let viewMonth = today.getMonth();
+
+function dk(y,m,d){ return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+function save(){ localStorage.setItem(KEY, JSON.stringify([...written])); }
+function p(m){ return PALETTES[m]; }
+
+function toast(msg, pal){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.background = pal.fill; t.style.color = pal.accent;
+  t.classList.add('show'); clearTimeout(t._t);
+  t._t = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+function streak(){
+  let s=0, d=new Date(today);
+  while(written.has(dk(d.getFullYear(),d.getMonth(),d.getDate()))){ s++; d.setDate(d.getDate()-1); }
+  return s;
+}
+
+function monthCount(y,m){
+  return [...written].filter(k=>{ const [ky,km]=k.split('-').map(Number); return ky===y&&km-1===m; }).length;
+}
+
+function applyChrome(pal){
+  const badge = document.getElementById('month-badge');
+  badge.textContent = MONTHS[viewMonth];
+  badge.style.background = pal.badgeBg;
+  badge.style.color = pal.badgeText;
+  ['total','streak','month'].forEach(id=>{
+    document.getElementById(`stat-box-${id}`).style.background = pal.statBg;
+    document.getElementById(`stat-${id}`).style.color = pal.statNum;
+    document.getElementById(`stat-box-${id}`).querySelector('.stat-label').style.color = pal.statNum;
+  });
+}
+
+function updateStats(){
+  document.getElementById('stat-total').textContent = written.size;
+  document.getElementById('stat-streak').textContent = streak();
+  document.getElementById('stat-month').textContent = monthCount(today.getFullYear(), today.getMonth());
+}
+
+function renderStreak(pal){
+  const c = document.getElementById('streak-dots'); c.innerHTML='';
+  const days = new Date(viewYear, viewMonth+1, 0).getDate();
+  for(let d=1;d<=days;d++){
+    const on=written.has(dk(viewYear, viewMonth, d));
+    const dot=document.createElement('div');
+    dot.className='streak-dot';
+    if(on) dot.style.background=pal.fill;
+    c.appendChild(dot);
+  }
+}
+
+function render(){
+  const pal = p(viewMonth);
+  const grid = document.getElementById('cal-grid'); grid.innerHTML='';
+  document.getElementById('month-title').textContent = `${MONTHS[viewMonth]} ${viewYear}`;
+
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  const days = new Date(viewYear, viewMonth+1, 0).getDate();
+
+  for(let i=0;i<firstDay;i++){
+    const e=document.createElement('div'); e.className='day empty'; grid.appendChild(e);
+  }
+
+  for(let d=1;d<=days;d++){
+    const k = dk(viewYear, viewMonth, d);
+    const isToday = new Date(viewYear,viewMonth,d).getTime()===today.getTime();
+    const isWritten = written.has(k);
+
+    const cell = document.createElement('div');
+    cell.className = 'day'+(isToday?' today':'')+(isWritten?' written':'');
+
+    if(isWritten){ cell.style.background=pal.fill; cell.style.borderColor=pal.fill; }
+    else if(isToday){ cell.style.borderColor=pal.fill; }
+
+    const num = document.createElement('div');
+    num.className='day-num'; num.textContent=d;
+    if(isWritten) num.style.color=pal.accent;
+    else if(isToday) num.style.color=pal.fill;
+    cell.appendChild(num);
+
+    if(isWritten){
+      const chk=document.createElement('div');
+      chk.className='check'; chk.textContent='✓'; chk.style.color=pal.accent;
+      cell.appendChild(chk);
+    }
+
+    cell.addEventListener('click', ()=>{
+      const cp=p(viewMonth);
+      if(written.has(k)){ written.delete(k); toast('unmarked',cp); }
+      else {
+        written.add(k);
+        const s=streak();
+        if(s>=30) toast(`🔥 ${s} days. Legendary.`,cp);
+        else if(s>=14) toast(`🔥 ${s} day streak!`,cp);
+        else if(s>=7) toast(`🔥 ${s} days in a row!`,cp);
+        else toast('1000 words ✓',cp);
+      }
+      save(); render(); renderStreak(p(viewMonth)); updateStats(); applyChrome(p(viewMonth));
+    });
+
+    grid.appendChild(cell);
+  }
+  applyChrome(pal); renderStreak(pal); updateStats();
+}
+
+document.getElementById('prev-btn').addEventListener('click',()=>{ viewMonth--; if(viewMonth<0){viewMonth=11;viewYear--;} render(); });
+document.getElementById('next-btn').addEventListener('click',()=>{ viewMonth++; if(viewMonth>11){viewMonth=0;viewYear++;} render(); });
+
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js'); }
+render();
+</script>
+</body>
+</html>
