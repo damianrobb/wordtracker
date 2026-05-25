@@ -196,8 +196,8 @@
 
     <div>
       <div class="weekdays">
-        <div class="weekday">S</div><div class="weekday">M</div><div class="weekday">T</div>
-        <div class="weekday">W</div><div class="weekday">T</div><div class="weekday">F</div>
+        <div class="weekday">M</div><div class="weekday">T</div><div class="weekday">W</div>
+        <div class="weekday">T</div><div class="weekday">F</div><div class="weekday">S</div>
         <div class="weekday">S</div>
       </div>
       <div class="grid" id="cal-grid"></div>
@@ -352,7 +352,7 @@ function render(){
   const grid = document.getElementById('cal-grid'); grid.innerHTML='';
   document.getElementById('month-title').textContent = `${MONTHS[viewMonth]} ${viewYear}`;
 
-  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  const firstDay = (new Date(viewYear, viewMonth, 1).getDay() + 6) % 7;
   const days = new Date(viewYear, viewMonth+1, 0).getDate();
 
   for(let i=0;i<firstDay;i++){
@@ -441,7 +441,7 @@ function renderYearView(){
   for(let m=0;m<12;m++){
     const pal = p(m);
     const daysInMonth = new Date(yearViewYear, m+1, 0).getDate();
-    const firstDay = new Date(yearViewYear, m, 1).getDay();
+    const firstDay = (new Date(yearViewYear, m, 1).getDay() + 6) % 7;
     const count = monthCount(yearViewYear, m);
 
     const mini = document.createElement('div');
