@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-title" content="Word Tracker">
   <meta name="theme-color" content="#f5f0e8">
   <title>Word Tracker</title>
-  <link rel="manifest" href="manifest.json?v=3">
+  <link rel="manifest" href="manifest.json?v=4">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
   <style>
@@ -39,25 +39,37 @@
       padding: env(safe-area-inset-top, 16px) 16px env(safe-area-inset-bottom, 24px);
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 18px;
     }
 
+    /* ── Header ── */
     .header { text-align: center; padding-top: 8px; }
-    .header h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; color: var(--text); }
+    .header h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+    .header-badges { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px; }
     .month-badge {
-      display: inline-block; margin-top: 6px;
+      display: inline-block;
       font-size: 11px; font-weight: 600; letter-spacing: 0.8px;
       text-transform: uppercase; padding: 3px 12px; border-radius: 20px;
+      cursor: pointer; transition: opacity 0.15s;
     }
+    .month-badge:active { opacity: 0.7; }
+    .year-toggle {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+      text-transform: uppercase; padding: 3px 10px; border-radius: 20px;
+      border: 1.5px solid var(--border); background: none;
+      cursor: pointer; color: var(--text-muted);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .year-toggle.active { color: var(--text); border-color: currentColor; }
 
+    /* ── Stats ── */
     .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .stat { border-radius: var(--radius); padding: 12px 8px; text-align: center; }
     .stat-num { font-size: 26px; font-weight: 600; line-height: 1; }
     .stat-label { font-size: 11px; margin-top: 3px; opacity: 0.65; }
 
-    .month-nav {
-      display: flex; align-items: center; justify-content: space-between;
-    }
+    /* ── Month nav ── */
+    .month-nav { display: flex; align-items: center; justify-content: space-between; }
     .month-nav button {
       background: var(--surface); border: 0.5px solid var(--border);
       border-radius: var(--radius); width: 40px; height: 40px;
@@ -66,39 +78,87 @@
       -webkit-tap-highlight-color: transparent;
     }
     .month-nav button:active { opacity: 0.5; }
-    .month-title { font-size: 17px; font-weight: 600; color: var(--text); }
+    .month-title { font-size: 17px; font-weight: 600; }
 
-    .weekdays {
-      display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;
-      margin-bottom: 4px;
-    }
-    .weekday {
-      text-align: center; font-size: 10px; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted);
-      padding: 2px 0;
-    }
+    /* ── Calendar ── */
+    .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-bottom: 4px; }
+    .weekday { text-align: center; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); padding: 2px 0; }
     .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
     .day {
-      aspect-ratio: 1; border-radius: 8px;
-      border: 0.5px solid var(--border);
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      cursor: pointer; background: var(--surface);
-      transition: transform 0.1s;
-      -webkit-tap-highlight-color: transparent;
+      aspect-ratio: 1; border-radius: 8px; border: 0.5px solid var(--border);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      cursor: pointer; background: var(--surface); transition: transform 0.1s;
+      -webkit-tap-highlight-color: transparent; position: relative;
     }
     .day:active { transform: scale(0.85); }
     .day.empty { border: none; background: none; cursor: default; pointer-events: none; }
     .day.today { border-width: 1.5px; }
+    .day.has-note::after {
+      content: ''; position: absolute; bottom: 3px; right: 3px;
+      width: 4px; height: 4px; border-radius: 50%; background: currentColor; opacity: 0.4;
+    }
     .day-num { font-size: 12px; line-height: 1; color: var(--text-muted); }
     .day.today .day-num { font-weight: 600; }
     .check { font-size: 14px; line-height: 1; margin-top: 1px; }
 
+    /* ── Note panel ── */
+    .note-panel {
+      border-radius: var(--radius); overflow: hidden;
+      max-height: 0; transition: max-height 0.3s ease, opacity 0.3s ease;
+      opacity: 0; pointer-events: none;
+    }
+    .note-panel.open { max-height: 200px; opacity: 1; pointer-events: all; }
+    .note-inner { padding: 12px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); }
+    .note-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px; }
+    .note-textarea {
+      width: 100%; border: none; background: none; resize: none;
+      font-family: inherit; font-size: 14px; color: var(--text);
+      outline: none; min-height: 60px; line-height: 1.5;
+    }
+    .note-textarea::placeholder { color: var(--text-muted); }
+    .note-close {
+      display: flex; justify-content: flex-end; margin-top: 8px;
+    }
+    .note-save-btn {
+      font-size: 12px; font-weight: 600; padding: 5px 14px;
+      border-radius: 20px; border: none; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── Streak dots ── */
     .streak-section { }
     .streak-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 6px; }
     .streak-dots { display: flex; gap: 3px; flex-wrap: wrap; }
     .streak-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(0,0,0,0.12); }
 
+    /* ── Year view ── */
+    .year-view { display: none; flex-direction: column; gap: 16px; }
+    .year-view.active { display: flex; }
+    .year-nav { display: flex; align-items: center; justify-content: space-between; }
+    .year-nav button {
+      background: var(--surface); border: 0.5px solid var(--border);
+      border-radius: var(--radius); width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--text); font-size: 18px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .year-nav button:active { opacity: 0.5; }
+    .year-title { font-size: 17px; font-weight: 600; }
+    .year-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .mini-month { border-radius: var(--radius); padding: 10px 8px; background: var(--surface); border: 0.5px solid var(--border); cursor: pointer; }
+    .mini-month:active { opacity: 0.7; }
+    .mini-month-name { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .mini-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+    .mini-day { width: 100%; aspect-ratio: 1; border-radius: 2px; background: rgba(0,0,0,0.06); }
+    .mini-day.written { }
+    .mini-day.empty-day { background: none; }
+    .mini-month-count { font-size: 10px; margin-top: 6px; opacity: 0.6; }
+
+    /* ── Calendar view wrapper ── */
+    .calendar-view { display: flex; flex-direction: column; gap: 18px; }
+    .calendar-view.hidden { display: none; }
+
+    /* ── Toast ── */
     .toast {
       position: fixed; bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
       left: 50%; transform: translateX(-50%);
@@ -114,7 +174,10 @@
 <div class="app">
   <div class="header">
     <h1>1000 words a day</h1>
-    <div class="month-badge" id="month-badge"></div>
+    <div class="header-badges">
+      <div class="month-badge" id="month-badge"></div>
+      <button class="year-toggle" id="year-toggle">Year</button>
+    </div>
   </div>
 
   <div class="stats">
@@ -123,24 +186,47 @@
     <div class="stat" id="stat-box-month"><div class="stat-num" id="stat-month">0</div><div class="stat-label">this month</div></div>
   </div>
 
-  <div class="month-nav">
-    <button id="prev-btn" aria-label="Previous month"><i class="ti ti-chevron-left"></i></button>
-    <div class="month-title" id="month-title"></div>
-    <button id="next-btn" aria-label="Next month"><i class="ti ti-chevron-right"></i></button>
-  </div>
-
-  <div>
-    <div class="weekdays">
-      <div class="weekday">S</div><div class="weekday">M</div><div class="weekday">T</div>
-      <div class="weekday">W</div><div class="weekday">T</div><div class="weekday">F</div>
-      <div class="weekday">S</div>
+  <!-- Calendar view -->
+  <div class="calendar-view" id="calendar-view">
+    <div class="month-nav">
+      <button id="prev-btn" aria-label="Previous month"><i class="ti ti-chevron-left"></i></button>
+      <div class="month-title" id="month-title"></div>
+      <button id="next-btn" aria-label="Next month"><i class="ti ti-chevron-right"></i></button>
     </div>
-    <div class="grid" id="cal-grid"></div>
+
+    <div>
+      <div class="weekdays">
+        <div class="weekday">S</div><div class="weekday">M</div><div class="weekday">T</div>
+        <div class="weekday">W</div><div class="weekday">T</div><div class="weekday">F</div>
+        <div class="weekday">S</div>
+      </div>
+      <div class="grid" id="cal-grid"></div>
+    </div>
+
+    <div class="note-panel" id="note-panel">
+      <div class="note-inner">
+        <div class="note-label" id="note-label">Note</div>
+        <textarea class="note-textarea" id="note-textarea" placeholder="What did you work on?"></textarea>
+        <div class="note-close">
+          <button class="note-save-btn" id="note-save-btn">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="streak-section">
+      <div class="streak-label">month so far</div>
+      <div class="streak-dots" id="streak-dots"></div>
+    </div>
   </div>
 
-  <div class="streak-section">
-    <div class="streak-label">month so far</div>
-    <div class="streak-dots" id="streak-dots"></div>
+  <!-- Year view -->
+  <div class="year-view" id="year-view">
+    <div class="year-nav">
+      <button id="year-prev-btn" aria-label="Previous year"><i class="ti ti-chevron-left"></i></button>
+      <div class="year-title" id="year-title"></div>
+      <button id="year-next-btn" aria-label="Next year"><i class="ti ti-chevron-right"></i></button>
+    </div>
+    <div class="year-grid" id="year-grid"></div>
   </div>
 </div>
 
@@ -164,13 +250,21 @@ const PALETTES = [
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const KEY = 'damian_1k_v3';
+const NOTES_KEY = 'damian_notes_v1';
+
 let written = new Set(JSON.parse(localStorage.getItem(KEY) || '[]'));
+let notes = JSON.parse(localStorage.getItem(NOTES_KEY) || '{}');
+
 const today = new Date(); today.setHours(0,0,0,0);
 let viewYear = today.getFullYear();
 let viewMonth = today.getMonth();
+let yearViewYear = today.getFullYear();
+let showingYear = false;
+let activeNoteKey = null;
 
 function dk(y,m,d){ return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
 function save(){ localStorage.setItem(KEY, JSON.stringify([...written])); }
+function saveNotes(){ localStorage.setItem(NOTES_KEY, JSON.stringify(notes)); }
 function p(m){ return PALETTES[m]; }
 
 function toast(msg, pal){
@@ -200,6 +294,10 @@ function applyChrome(pal){
     document.getElementById(`stat-${id}`).style.color = pal.statNum;
     document.getElementById(`stat-box-${id}`).querySelector('.stat-label').style.color = pal.statNum;
   });
+  // note save button
+  const btn = document.getElementById('note-save-btn');
+  btn.style.background = pal.fill;
+  btn.style.color = pal.accent;
 }
 
 function updateStats(){
@@ -220,6 +318,35 @@ function renderStreak(pal){
   }
 }
 
+// ── Note panel ──
+function openNote(k, dayLabel, pal){
+  activeNoteKey = k;
+  const panel = document.getElementById('note-panel');
+  const textarea = document.getElementById('note-textarea');
+  const label = document.getElementById('note-label');
+  label.textContent = dayLabel;
+  textarea.value = notes[k] || '';
+  panel.classList.add('open');
+  setTimeout(()=> textarea.focus(), 320);
+}
+
+function closeNote(){
+  const panel = document.getElementById('note-panel');
+  const textarea = document.getElementById('note-textarea');
+  if(activeNoteKey !== null){
+    const val = textarea.value.trim();
+    if(val) notes[activeNoteKey] = val;
+    else delete notes[activeNoteKey];
+    saveNotes();
+  }
+  panel.classList.remove('open');
+  activeNoteKey = null;
+  render();
+}
+
+document.getElementById('note-save-btn').addEventListener('click', closeNote);
+
+// ── Calendar ──
 function render(){
   const pal = p(viewMonth);
   const grid = document.getElementById('cal-grid'); grid.innerHTML='';
@@ -236,12 +363,19 @@ function render(){
     const k = dk(viewYear, viewMonth, d);
     const isToday = new Date(viewYear,viewMonth,d).getTime()===today.getTime();
     const isWritten = written.has(k);
+    const hasNote = !!notes[k];
 
     const cell = document.createElement('div');
-    cell.className = 'day'+(isToday?' today':'')+(isWritten?' written':'');
+    let cls = 'day'+(isToday?' today':'')+(isWritten?' written':'')+(hasNote?' has-note':'');
+    cell.className = cls;
 
-    if(isWritten){ cell.style.background=pal.fill; cell.style.borderColor=pal.fill; }
-    else if(isToday){ cell.style.borderColor=pal.fill; }
+    if(isWritten){
+      cell.style.background = pal.fill;
+      cell.style.borderColor = pal.fill;
+      cell.style.color = pal.accent;
+    } else if(isToday){
+      cell.style.borderColor = pal.fill;
+    }
 
     const num = document.createElement('div');
     num.className='day-num'; num.textContent=d;
@@ -256,6 +390,10 @@ function render(){
     }
 
     cell.addEventListener('click', ()=>{
+      // If note panel is open for a different day, close it first
+      if(activeNoteKey !== null && activeNoteKey !== k){ closeNote(); }
+
+      // Toggle written
       const cp=p(viewMonth);
       if(written.has(k)){ written.delete(k); toast('unmarked',cp); }
       else {
@@ -269,13 +407,120 @@ function render(){
       save(); render(); renderStreak(p(viewMonth)); updateStats(); applyChrome(p(viewMonth));
     });
 
+    cell.addEventListener('dblclick', (e)=>{
+      e.stopPropagation();
+      const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      openNote(k, `${d} ${MONTHS_SHORT[viewMonth]} ${viewYear}`, p(viewMonth));
+    });
+
+    // Long press for note on mobile
+    let pressTimer;
+    cell.addEventListener('touchstart', ()=>{
+      pressTimer = setTimeout(()=>{
+        const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        openNote(k, `${d} ${MONTHS_SHORT[viewMonth]} ${viewYear}`, p(viewMonth));
+      }, 500);
+    }, {passive:true});
+    cell.addEventListener('touchend', ()=> clearTimeout(pressTimer), {passive:true});
+    cell.addEventListener('touchmove', ()=> clearTimeout(pressTimer), {passive:true});
+
     grid.appendChild(cell);
   }
   applyChrome(pal); renderStreak(pal); updateStats();
 }
 
-document.getElementById('prev-btn').addEventListener('click',()=>{ viewMonth--; if(viewMonth<0){viewMonth=11;viewYear--;} render(); });
-document.getElementById('next-btn').addEventListener('click',()=>{ viewMonth++; if(viewMonth>11){viewMonth=0;viewYear++;} render(); });
+// ── Year view ──
+function renderYearView(){
+  const grid = document.getElementById('year-grid'); grid.innerHTML='';
+  document.getElementById('year-title').textContent = yearViewYear;
+
+  // disable future year nav
+  document.getElementById('year-next-btn').style.opacity = yearViewYear >= today.getFullYear() ? '0.3' : '1';
+  document.getElementById('year-next-btn').disabled = yearViewYear >= today.getFullYear();
+
+  for(let m=0;m<12;m++){
+    const pal = p(m);
+    const daysInMonth = new Date(yearViewYear, m+1, 0).getDate();
+    const firstDay = new Date(yearViewYear, m, 1).getDay();
+    const count = monthCount(yearViewYear, m);
+
+    const mini = document.createElement('div');
+    mini.className = 'mini-month';
+    mini.style.borderColor = pal.badgeBg;
+
+    const name = document.createElement('div');
+    name.className = 'mini-month-name';
+    name.textContent = MONTHS[m].slice(0,3).toUpperCase();
+    name.style.color = pal.fill;
+    mini.appendChild(name);
+
+    const miniGrid = document.createElement('div');
+    miniGrid.className = 'mini-grid';
+
+    for(let i=0;i<firstDay;i++){
+      const e=document.createElement('div'); e.className='mini-day empty-day'; miniGrid.appendChild(e);
+    }
+    for(let d=1;d<=daysInMonth;d++){
+      const k=dk(yearViewYear,m,d);
+      const dot=document.createElement('div');
+      dot.className='mini-day'+(written.has(k)?' written':'');
+      if(written.has(k)) dot.style.background=pal.fill;
+      miniGrid.appendChild(dot);
+    }
+    mini.appendChild(miniGrid);
+
+    const countEl = document.createElement('div');
+    countEl.className = 'mini-month-count';
+    countEl.textContent = count > 0 ? `${count} day${count===1?'':'s'}` : '–';
+    countEl.style.color = pal.fill;
+    mini.appendChild(countEl);
+
+    // Tap to jump to that month
+    mini.addEventListener('click', ()=>{
+      viewYear = yearViewYear;
+      viewMonth = m;
+      toggleYearView(false);
+    });
+
+    grid.appendChild(mini);
+  }
+}
+
+function toggleYearView(show){
+  showingYear = show;
+  document.getElementById('calendar-view').classList.toggle('hidden', show);
+  document.getElementById('year-view').classList.toggle('active', show);
+  document.getElementById('year-toggle').classList.toggle('active', show);
+  document.getElementById('year-toggle').textContent = show ? 'Calendar' : 'Year';
+  if(show){
+    yearViewYear = today.getFullYear();
+    renderYearView();
+  } else {
+    render();
+  }
+}
+
+document.getElementById('year-toggle').addEventListener('click', ()=> toggleYearView(!showingYear));
+document.getElementById('month-badge').addEventListener('click', ()=>{ if(showingYear) toggleYearView(false); });
+
+document.getElementById('prev-btn').addEventListener('click',()=>{ viewMonth--; if(viewMonth<0){viewMonth=11;viewYear--;} closeNoteQuiet(); render(); });
+document.getElementById('next-btn').addEventListener('click',()=>{ viewMonth++; if(viewMonth>11){viewMonth=0;viewYear++;} closeNoteQuiet(); render(); });
+
+document.getElementById('year-prev-btn').addEventListener('click',()=>{ yearViewYear--; renderYearView(); });
+document.getElementById('year-next-btn').addEventListener('click',()=>{ if(yearViewYear<today.getFullYear()){ yearViewYear++; renderYearView(); } });
+
+function closeNoteQuiet(){
+  // Save without re-rendering (render is about to happen)
+  const textarea = document.getElementById('note-textarea');
+  if(activeNoteKey !== null){
+    const val = textarea.value.trim();
+    if(val) notes[activeNoteKey] = val;
+    else delete notes[activeNoteKey];
+    saveNotes();
+  }
+  document.getElementById('note-panel').classList.remove('open');
+  activeNoteKey = null;
+}
 
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js'); }
 render();
