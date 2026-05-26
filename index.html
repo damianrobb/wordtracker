@@ -158,6 +158,34 @@
     .calendar-view { display: flex; flex-direction: column; gap: 18px; }
     .calendar-view.hidden { display: none; }
 
+    /* ── Word counter ── */
+    .word-counter { margin-bottom: 12px; }
+    .word-counter-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .word-count-display { font-size: 28px; font-weight: 700; line-height: 1; transition: color 0.3s; }
+    .word-count-goal { font-size: 12px; opacity: 0.5; margin-left: 2px; align-self: flex-end; padding-bottom: 3px; }
+    .word-count-flourish { font-size: 14px; opacity: 0; transition: opacity 0.4s; }
+    .word-count-flourish.show { opacity: 1; }
+    .word-input-row { display: flex; gap: 6px; }
+    .word-input {
+      flex: 1; border: 0.5px solid var(--border); border-radius: 8px;
+      padding: 7px 10px; font-size: 14px; font-family: inherit;
+      background: var(--bg); color: var(--text); outline: none;
+    }
+    .word-input:focus { border-color: currentColor; }
+    .word-add-btn {
+      padding: 7px 14px; border-radius: 8px; border: none;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .word-reset-btn {
+      padding: 7px 10px; border-radius: 8px; border: 0.5px solid var(--border);
+      font-size: 12px; background: none; cursor: pointer; color: var(--text-muted);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .monthly-words { margin-top: 10px; }
+    .monthly-words-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 4px; }
+    .monthly-words-count { font-size: 15px; font-weight: 600; }
+
     /* ── Toast ── */
     .toast {
       position: fixed; bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
@@ -205,6 +233,18 @@
 
     <div class="note-panel" id="note-panel">
       <div class="note-inner">
+        <div class="word-counter" id="word-counter">
+          <div class="word-counter-row">
+            <div class="word-count-display" id="word-count-display">0</div>
+            <div class="word-count-goal">/ 1000</div>
+            <div class="word-count-flourish" id="word-count-flourish">✦</div>
+          </div>
+          <div class="word-input-row">
+            <input class="word-input" id="word-input" type="number" min="0" placeholder="add words…">
+            <button class="word-add-btn" id="word-add-btn">+</button>
+            <button class="word-reset-btn" id="word-reset-btn">Reset</button>
+          </div>
+        </div>
         <div class="note-label" id="note-label">Note</div>
         <textarea class="note-textarea" id="note-textarea" placeholder="What did you work on?"></textarea>
         <div class="note-close">
@@ -216,6 +256,10 @@
     <div class="streak-section">
       <div class="streak-label">month so far</div>
       <div class="streak-dots" id="streak-dots"></div>
+    </div>
+    <div class="monthly-words">
+      <div class="monthly-words-label">words this month</div>
+      <div class="monthly-words-count" id="monthly-words-count">0</div>
     </div>
   </div>
 
@@ -254,6 +298,22 @@ const NOTES_KEY = 'damian_notes_v1';
 
 let written = new Set(JSON.parse(localStorage.getItem(KEY) || '[]'));
 let notes = JSON.parse(localStorage.getItem(NOTES_KEY) || '{}');
+const WORDS_KEY = 'damian_words_v1';
+let wordCounts = JSON.parse(localStorage.getItem(WORDS_KEY) || '{}');
+function saveWords(){ localStorage.setItem(WORDS_KEY, JSON.stringify(wordCounts)); }
+
+function getMonthlyWords(y, m){
+  return Object.entries(wordCounts).reduce((sum, [k, v]) => {
+    const [ky, km] = k.split('-').map(Number);
+    return (ky === y && km-1 === m) ? sum + v : sum;
+  }, 0);
+}
+
+function updateMonthlyWords(){
+  const total = getMonthlyWords(today.getFullYear(), today.getMonth());
+  const el = document.getElementById('monthly-words-count');
+  if(el) el.textContent = total.toLocaleString();
+}
 
 const today = new Date(); today.setHours(0,0,0,0);
 let viewYear = today.getFullYear();
@@ -326,8 +386,30 @@ function openNote(k, dayLabel, pal){
   const label = document.getElementById('note-label');
   label.textContent = dayLabel;
   textarea.value = notes[k] || '';
+
+  // word counter
+  const count = wordCounts[k] || 0;
+  updateWordDisplay(count, pal);
+
   panel.classList.add('open');
-  setTimeout(()=> textarea.focus(), 320);
+  setTimeout(()=> document.getElementById('word-input').focus(), 320);
+}
+
+function updateWordDisplay(count, pal){
+  const display = document.getElementById('word-count-display');
+  const flourish = document.getElementById('word-count-flourish');
+  const addBtn = document.getElementById('word-add-btn');
+  display.textContent = count.toLocaleString();
+  if(count >= 1000){
+    display.style.color = pal.fill;
+    flourish.style.color = pal.fill;
+    flourish.classList.add('show');
+  } else {
+    display.style.color = '';
+    flourish.classList.remove('show');
+  }
+  addBtn.style.background = pal.fill;
+  addBtn.style.color = pal.accent;
 }
 
 function closeNote(){
@@ -342,6 +424,7 @@ function closeNote(){
   panel.classList.remove('open');
   activeNoteKey = null;
   render();
+  updateMonthlyWords();
 }
 
 document.getElementById('note-save-btn').addEventListener('click', closeNote);
@@ -426,7 +509,7 @@ function render(){
 
     grid.appendChild(cell);
   }
-  applyChrome(pal); renderStreak(pal); updateStats();
+  applyChrome(pal); renderStreak(pal); updateStats(); updateMonthlyWords();
 }
 
 // ── Year view ──
@@ -521,6 +604,31 @@ function closeNoteQuiet(){
   document.getElementById('note-panel').classList.remove('open');
   activeNoteKey = null;
 }
+
+// Word counter buttons
+document.getElementById('word-add-btn').addEventListener('click', ()=>{
+  if(!activeNoteKey) return;
+  const input = document.getElementById('word-input');
+  const val = parseInt(input.value);
+  if(!val || val <= 0) return;
+  wordCounts[activeNoteKey] = (wordCounts[activeNoteKey] || 0) + val;
+  saveWords();
+  input.value = '';
+  updateWordDisplay(wordCounts[activeNoteKey], p(viewMonth));
+  updateMonthlyWords();
+});
+
+document.getElementById('word-input').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter') document.getElementById('word-add-btn').click();
+});
+
+document.getElementById('word-reset-btn').addEventListener('click', ()=>{
+  if(!activeNoteKey) return;
+  delete wordCounts[activeNoteKey];
+  saveWords();
+  updateWordDisplay(0, p(viewMonth));
+  updateMonthlyWords();
+});
 
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js'); }
 render();
