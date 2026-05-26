@@ -433,6 +433,14 @@ function openNote(k, dayLabel, pal){
   label.textContent = dayLabel;
   textarea.value = notes[k] || '';
 
+  // Always sync note panel colours to current month
+  const noteInner = document.querySelector('.note-inner');
+  if(noteInner) noteInner.style.background = pal.surface;
+  document.getElementById('note-save-btn').style.background = pal.fill;
+  document.getElementById('note-save-btn').style.color = pal.accent;
+  const addBtn = document.getElementById('word-add-btn');
+  if(addBtn){ addBtn.style.background = pal.fill; addBtn.style.color = pal.accent; }
+
   // word counter
   const count = wordCounts[k] || 0;
   updateWordDisplay(count, pal);
