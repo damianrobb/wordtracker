@@ -104,16 +104,16 @@
     /* ── Note panel ── */
     .note-panel {
       border-radius: var(--radius); overflow: hidden;
-      max-height: 0; transition: max-height 0.3s ease, opacity 0.3s ease;
+      max-height: 0; transition: max-height 0.4s ease, opacity 0.3s ease;
       opacity: 0; pointer-events: none;
     }
-    .note-panel.open { max-height: 200px; opacity: 1; pointer-events: all; }
+    .note-panel.open { max-height: 1000px; opacity: 1; pointer-events: all; }
     .note-inner { padding: 12px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); }
     .note-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px; }
     .note-textarea {
       width: 100%; border: none; background: none; resize: none;
       font-family: inherit; font-size: 14px; color: var(--text);
-      outline: none; min-height: 60px; line-height: 1.5;
+      outline: none; min-height: 120px; line-height: 1.5;
     }
     .note-textarea::placeholder { color: var(--text-muted); }
     .note-close {
@@ -231,6 +231,15 @@
       <div class="grid" id="cal-grid"></div>
     </div>
 
+    <div class="streak-section">
+      <div class="streak-label">month so far</div>
+      <div class="streak-dots" id="streak-dots"></div>
+    </div>
+    <div class="monthly-words">
+      <div class="monthly-words-label">words this month</div>
+      <div class="monthly-words-count" id="monthly-words-count">0</div>
+    </div>
+
     <div class="note-panel" id="note-panel">
       <div class="note-inner">
         <div class="word-counter" id="word-counter">
@@ -251,15 +260,6 @@
           <button class="note-save-btn" id="note-save-btn">Done</button>
         </div>
       </div>
-    </div>
-
-    <div class="streak-section">
-      <div class="streak-label">month so far</div>
-      <div class="streak-dots" id="streak-dots"></div>
-    </div>
-    <div class="monthly-words">
-      <div class="monthly-words-label">words this month</div>
-      <div class="monthly-words-count" id="monthly-words-count">0</div>
     </div>
   </div>
 
