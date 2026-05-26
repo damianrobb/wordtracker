@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-title" content="Word Tracker">
   <meta name="theme-color" content="#c4d0a8">
   <title>Word Tracker</title>
-  <link rel="manifest" href="manifest.json?v=4">
+  <link rel="manifest" href="manifest.json?v=5">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
   <style>
@@ -357,8 +357,10 @@ function monthCount(y,m){
 }
 
 function applyChrome(pal){
-  // Page background
+  // Page background + status bar theme colour
   document.body.style.background = pal.bg;
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  if(themeMeta) themeMeta.setAttribute('content', pal.bg);
 
   const badge = document.getElementById('month-badge');
   badge.textContent = MONTHS[viewMonth];
