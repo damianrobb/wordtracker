@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Word Tracker">
-  <meta name="theme-color" content="#f5f0e8">
+  <meta name="theme-color" content="#c4d0a8">
   <title>Word Tracker</title>
   <link rel="manifest" href="manifest.json?v=4">
   <link rel="apple-touch-icon" href="icon-192.png">
@@ -15,10 +15,10 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #f5f0e8;
-      --surface: #ffffff;
+      --bg: #c4d0a8;
+      --surface: rgba(255,255,255,0.55);
       --text: #1a1a1a;
-      --text-muted: #999;
+      --text-muted: #666;
       --border: rgba(0,0,0,0.1);
       --radius: 10px;
     }
@@ -278,18 +278,30 @@
 
 <script>
 const PALETTES = [
-  { fill:'#224363', accent:'#f3e6a7', statBg:'#ddeaf5', statNum:'#224363', badgeBg:'#d0e3f2', badgeText:'#1a3350' },
-  { fill:'#5a3a6e', accent:'#d4a0c8', statBg:'#ecdaf5', statNum:'#5a3a6e', badgeBg:'#e8d5f0', badgeText:'#4a2a5e' },
-  { fill:'#005347', accent:'#f3e6a7', statBg:'#cde8e2', statNum:'#005347', badgeBg:'#c4e8e2', badgeText:'#003d34' },
-  { fill:'#4a4160', accent:'#c9a0c0', statBg:'#ddd9ec', statNum:'#4a4160', badgeBg:'#ddd9ec', badgeText:'#3a3050' },
-  { fill:'#80321e', accent:'#f3e6a7', statBg:'#f0d4cc', statNum:'#80321e', badgeBg:'#f0d4cc', badgeText:'#6a2818' },
-  { fill:'#224363', accent:'#c9a0c0', statBg:'#ddeaf5', statNum:'#224363', badgeBg:'#d0e3f2', badgeText:'#1a3350' },
-  { fill:'#0d6b50', accent:'#fedc97', statBg:'#c0e8dc', statNum:'#0d6b50', badgeBg:'#c0e8dc', badgeText:'#0a5040' },
-  { fill:'#80321e', accent:'#c9a0c0', statBg:'#f0d4cc', statNum:'#80321e', badgeBg:'#f0d4cc', badgeText:'#6a2818' },
-  { fill:'#4a4160', accent:'#fedc97', statBg:'#ddd9ec', statNum:'#4a4160', badgeBg:'#ddd9ec', badgeText:'#3a3050' },
-  { fill:'#b85e10', accent:'#f3e6a7', statBg:'#f8dfc0', statNum:'#b85e10', badgeBg:'#f8dfc0', badgeText:'#9a4e0c' },
-  { fill:'#28666e', accent:'#fedc97', statBg:'#c4e4e8', statNum:'#28666e', badgeBg:'#c4e4e8', badgeText:'#1e5058' },
-  { fill:'#3a2d58', accent:'#f3e6a7', statBg:'#d8d0ee', statNum:'#3a2d58', badgeBg:'#d8d0ee', badgeText:'#2e2448' },
+  // Jan: cool slate
+  { bg:'#c8d4e0', fill:'#1e3a52', accent:'#b8d4f0', statBg:'rgba(255,255,255,0.45)', statNum:'#1e3a52', badgeBg:'#dde6ee', badgeText:'#1e3a52', surface:'rgba(255,255,255,0.55)' },
+  // Feb: dusty mauve
+  { bg:'#ddd0e0', fill:'#5a2e6e', accent:'#e8c8f0', statBg:'rgba(255,255,255,0.45)', statNum:'#5a2e6e', badgeBg:'#ece0ee', badgeText:'#5a2e6e', surface:'rgba(255,255,255,0.55)' },
+  // Mar: sage green
+  { bg:'#c8d4b8', fill:'#2a4a1e', accent:'#c8e8a8', statBg:'rgba(255,255,255,0.45)', statNum:'#2a4a1e', badgeBg:'#d8e4c8', badgeText:'#2a4a1e', surface:'rgba(255,255,255,0.55)' },
+  // Apr: warm mushroom
+  { bg:'#d4ccc0', fill:'#4a3828', accent:'#e8d8c0', statBg:'rgba(255,255,255,0.45)', statNum:'#4a3828', badgeBg:'#e0d8cc', badgeText:'#4a3828', surface:'rgba(255,255,255,0.55)' },
+  // May: your sage green
+  { bg:'#c4d0a8', fill:'#3a5020', accent:'#d4e8a8', statBg:'rgba(255,255,255,0.45)', statNum:'#3a5020', badgeBg:'#d4e0b8', badgeText:'#3a5020', surface:'rgba(255,255,255,0.55)' },
+  // Jun: warm terracotta
+  { bg:'#e0c8b8', fill:'#6a2e18', accent:'#f0c8a8', statBg:'rgba(255,255,255,0.45)', statNum:'#6a2e18', badgeBg:'#ead8c8', badgeText:'#6a2e18', surface:'rgba(255,255,255,0.55)' },
+  // Jul: deep teal
+  { bg:'#b8d0d0', fill:'#1a4848', accent:'#a8d8d8', statBg:'rgba(255,255,255,0.45)', statNum:'#1a4848', badgeBg:'#cce0e0', badgeText:'#1a4848', surface:'rgba(255,255,255,0.55)' },
+  // Aug: dusty gold
+  { bg:'#e0d0a0', fill:'#5a4010', accent:'#f0d870', statBg:'rgba(255,255,255,0.45)', statNum:'#5a4010', badgeBg:'#ecdeb8', badgeText:'#5a4010', surface:'rgba(255,255,255,0.55)' },
+  // Sep: warm rose
+  { bg:'#e0c8c8', fill:'#6a2030', accent:'#f0b0b8', statBg:'rgba(255,255,255,0.45)', statNum:'#6a2030', badgeBg:'#ecd8d8', badgeText:'#6a2030', surface:'rgba(255,255,255,0.55)' },
+  // Oct: burnt orange
+  { bg:'#e8c8a0', fill:'#6a3000', accent:'#f8c060', statBg:'rgba(255,255,255,0.45)', statNum:'#6a3000', badgeBg:'#f0d8b8', badgeText:'#6a3000', surface:'rgba(255,255,255,0.55)' },
+  // Nov: cool grey-green
+  { bg:'#c0ccc0', fill:'#2a3e2a', accent:'#a8c8a0', statBg:'rgba(255,255,255,0.45)', statNum:'#2a3e2a', badgeBg:'#d0dcd0', badgeText:'#2a3e2a', surface:'rgba(255,255,255,0.55)' },
+  // Dec: midnight indigo
+  { bg:'#c4c8e0', fill:'#1e1e4a', accent:'#b8c0f0', statBg:'rgba(255,255,255,0.45)', statNum:'#1e1e4a', badgeBg:'#d4d8ee', badgeText:'#1e1e4a', surface:'rgba(255,255,255,0.55)' },
 ];
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -345,19 +357,51 @@ function monthCount(y,m){
 }
 
 function applyChrome(pal){
+  // Page background
+  document.body.style.background = pal.bg;
+
   const badge = document.getElementById('month-badge');
   badge.textContent = MONTHS[viewMonth];
   badge.style.background = pal.badgeBg;
   badge.style.color = pal.badgeText;
+
   ['total','streak','month'].forEach(id=>{
     document.getElementById(`stat-box-${id}`).style.background = pal.statBg;
     document.getElementById(`stat-${id}`).style.color = pal.statNum;
     document.getElementById(`stat-box-${id}`).querySelector('.stat-label').style.color = pal.statNum;
   });
-  // note save button
+
+  // Nav buttons
+  document.querySelectorAll('.month-nav button, .year-nav button').forEach(btn => {
+    btn.style.background = pal.surface;
+    btn.style.borderColor = 'rgba(0,0,0,0.12)';
+  });
+
+  // Year toggle
+  const yt = document.getElementById('year-toggle');
+  yt.style.background = pal.surface;
+  yt.style.color = pal.fill;
+  yt.style.borderColor = pal.fill;
+
+  // Note panel
+  const noteInner = document.querySelector('.note-inner');
+  if(noteInner) noteInner.style.background = pal.surface;
   const btn = document.getElementById('note-save-btn');
   btn.style.background = pal.fill;
   btn.style.color = pal.accent;
+
+  // Word add button
+  const addBtn = document.getElementById('word-add-btn');
+  if(addBtn){ addBtn.style.background = pal.fill; addBtn.style.color = pal.accent; }
+
+  // monthly words colour
+  const mw = document.getElementById('monthly-words-count');
+  if(mw) mw.style.color = pal.fill;
+
+  // CSS variable for day surface
+  document.documentElement.style.setProperty('--month-surface', pal.surface);
+  document.documentElement.style.setProperty('--month-fill', pal.fill);
+  document.documentElement.style.setProperty('--month-bg', pal.bg);
 }
 
 function updateStats(){
