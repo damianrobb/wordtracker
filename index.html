@@ -363,7 +363,7 @@ function getMonthlyWords(y, m){
 }
 
 function updateMonthlyWords(){
-  const total = getMonthlyWords(today.getFullYear(), today.getMonth());
+  const total = getMonthlyWords(viewYear, viewMonth);
   const el = document.getElementById('monthly-words-count');
   if(el) el.textContent = total.toLocaleString();
 }
@@ -454,7 +454,7 @@ function applyChrome(pal){
 function updateStats(){
   document.getElementById('stat-total').textContent = written.size;
   document.getElementById('stat-streak').textContent = streak();
-  document.getElementById('stat-month').textContent = monthCount(today.getFullYear(), today.getMonth());
+  document.getElementById('stat-month').textContent = monthCount(viewYear, viewMonth);
 }
 
 function renderStreak(pal){
@@ -616,9 +616,9 @@ function renderYearView(){
   const grid = document.getElementById('year-grid'); grid.innerHTML='';
   document.getElementById('year-title').textContent = yearViewYear;
 
-  // disable future year nav
-  document.getElementById('year-next-btn').style.opacity = yearViewYear >= today.getFullYear() ? '0.3' : '1';
-  document.getElementById('year-next-btn').disabled = yearViewYear >= today.getFullYear();
+  // no year restrictions — allow past and future
+  document.getElementById('year-next-btn').style.opacity = '1';
+  document.getElementById('year-next-btn').disabled = false;
 
   for(let m=0;m<12;m++){
     const pal = p(m);
@@ -689,7 +689,7 @@ document.getElementById('prev-btn').addEventListener('click',()=>{ viewMonth--; 
 document.getElementById('next-btn').addEventListener('click',()=>{ viewMonth++; if(viewMonth>11){viewMonth=0;viewYear++;} closeNoteQuiet(); render(); });
 
 document.getElementById('year-prev-btn').addEventListener('click',()=>{ yearViewYear--; renderYearView(); });
-document.getElementById('year-next-btn').addEventListener('click',()=>{ if(yearViewYear<today.getFullYear()){ yearViewYear++; renderYearView(); } });
+document.getElementById('year-next-btn').addEventListener('click',()=>{ yearViewYear++; renderYearView(); });
 
 function closeNoteQuiet(){
   // Save without re-rendering (render is about to happen)
