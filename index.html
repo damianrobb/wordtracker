@@ -307,14 +307,53 @@ const PALETTES = [
 ];
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const KEY = 'damian_1k_v3';
-const NOTES_KEY = 'damian_notes_v1';
+// ── Supabase ──
+const SUPABASE_URL = 'https://xfrkbgkfsubgylyrashs.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmcmtiZ2tmc3ViZ3lseXJhc2hzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMDg2MzIsImV4cCI6MjA5NTc4NDYzMn0.ep6V2AAMm1C36mefEj5SpiYptiT3PDM0Ro5YVMF3ANI';
 
-let written = new Set(JSON.parse(localStorage.getItem(KEY) || '[]'));
-let notes = JSON.parse(localStorage.getItem(NOTES_KEY) || '{}');
-const WORDS_KEY = 'damian_words_v1';
-let wordCounts = JSON.parse(localStorage.getItem(WORDS_KEY) || '{}');
-function saveWords(){ localStorage.setItem(WORDS_KEY, JSON.stringify(wordCounts)); }
+async function sbFetch(method, body) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/entries`, {
+    method,
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': method === 'POST' ? 'resolution=merge-duplicates,return=minimal' : 'return=minimal',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  return res;
+}
+
+async function loadAllData() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/entries?select=*`, {
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+  });
+  const rows = await res.json();
+  written = new Set();
+  notes = {};
+  wordCounts = {};
+  for (const row of rows) {
+    if (row.written) written.add(row.date);
+    if (row.note) notes[row.date] = row.note;
+    if (row.words) wordCounts[row.date] = row.words;
+  }
+}
+
+async function saveEntry(dateKey) {
+  const entry = {
+    date: dateKey,
+    written: written.has(dateKey),
+    words: wordCounts[dateKey] || 0,
+    note: notes[dateKey] || '',
+  };
+  await sbFetch('POST', [entry]);
+}
+
+// Local state
+let written = new Set();
+let notes = {};
+let wordCounts = {};
 
 function getMonthlyWords(y, m){
   return Object.entries(wordCounts).reduce((sum, [k, v]) => {
@@ -337,8 +376,8 @@ let showingYear = false;
 let activeNoteKey = null;
 
 function dk(y,m,d){ return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
-function save(){ localStorage.setItem(KEY, JSON.stringify([...written])); }
-function saveNotes(){ localStorage.setItem(NOTES_KEY, JSON.stringify(notes)); }
+function save(dateKey){ saveEntry(dateKey); }
+function saveNotes(dateKey){ if(dateKey) saveEntry(dateKey); }
 function p(m){ return PALETTES[m]; }
 
 function toast(msg, pal){
@@ -479,7 +518,7 @@ function closeNote(){
     const val = textarea.value.trim();
     if(val) notes[activeNoteKey] = val;
     else delete notes[activeNoteKey];
-    saveNotes();
+    saveNotes(activeNoteKey);
   }
   panel.classList.remove('open');
   activeNoteKey = null;
@@ -547,7 +586,7 @@ function render(){
         else if(s>=7) toast(`🔥 ${s} days in a row!`,cp);
         else toast('1000 words ✓',cp);
       }
-      save(); render(); renderStreak(p(viewMonth)); updateStats(); applyChrome(p(viewMonth));
+      save(k); render(); renderStreak(p(viewMonth)); updateStats(); applyChrome(p(viewMonth));
     });
 
     cell.addEventListener('dblclick', (e)=>{
@@ -659,7 +698,7 @@ function closeNoteQuiet(){
     const val = textarea.value.trim();
     if(val) notes[activeNoteKey] = val;
     else delete notes[activeNoteKey];
-    saveNotes();
+    saveNotes(activeNoteKey);
   }
   document.getElementById('note-panel').classList.remove('open');
   activeNoteKey = null;
@@ -672,7 +711,7 @@ document.getElementById('word-add-btn').addEventListener('click', ()=>{
   const val = parseInt(input.value);
   if(!val || val <= 0) return;
   wordCounts[activeNoteKey] = (wordCounts[activeNoteKey] || 0) + val;
-  saveWords();
+  saveEntry(activeNoteKey);
   input.value = '';
   updateWordDisplay(wordCounts[activeNoteKey], p(viewMonth));
   updateMonthlyWords();
@@ -685,13 +724,21 @@ document.getElementById('word-input').addEventListener('keydown', (e)=>{
 document.getElementById('word-reset-btn').addEventListener('click', ()=>{
   if(!activeNoteKey) return;
   delete wordCounts[activeNoteKey];
-  saveWords();
+  saveEntry(activeNoteKey);
   updateWordDisplay(0, p(viewMonth));
   updateMonthlyWords();
 });
 
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js'); }
-render();
+
+// Show loading state then load data
+document.getElementById('month-title').textContent = 'Loading…';
+loadAllData().then(() => {
+  render();
+}).catch(err => {
+  console.error('Failed to load from Supabase:', err);
+  render();
+});
 </script>
 </body>
 </html>
