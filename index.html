@@ -307,14 +307,16 @@ const PALETTES = [
 ];
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-// ── Google Sheets backend ──
+// ── Google Sheets backend (GET only for CORS compatibility) ──
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx9E31J4ZiFHFHdkkixAzMQoyc84PsK8a0FPJxV_CwImUEKdj5ahIss77OUtaRkkTqKtw/exec';
 
 async function loadAllData() {
   try {
-    const res = await fetch(`${SCRIPT_URL}?action=getAll`, { redirect: 'follow' });
-    const text = await res.text();
-    const data = JSON.parse(text);
+    const res = await fetch(`${SCRIPT_URL}?action=getAll`, {
+      redirect: 'follow',
+      cache: 'no-cache',
+    });
+    const data = await res.json();
     written = new Set();
     notes = {};
     wordCounts = {};
@@ -329,17 +331,17 @@ async function loadAllData() {
 }
 
 async function saveEntry(dateKey) {
-  const entry = {
-    date: dateKey,
-    written: written.has(dateKey),
-    words: wordCounts[dateKey] || 0,
-    note: notes[dateKey] || '',
-  };
   try {
-    await fetch(SCRIPT_URL, {
-      method: 'POST',
+    const params = new URLSearchParams({
+      action: 'upsert',
+      date: dateKey,
+      written: written.has(dateKey) ? 'TRUE' : 'FALSE',
+      words: wordCounts[dateKey] || 0,
+      note: notes[dateKey] || '',
+    });
+    await fetch(`${SCRIPT_URL}?${params.toString()}`, {
       redirect: 'follow',
-      body: JSON.stringify({ action: 'upsert', entry }),
+      cache: 'no-cache',
     });
   } catch(err) {
     console.error('saveEntry failed:', err);
