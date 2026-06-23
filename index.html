@@ -311,15 +311,20 @@ const MONTHS = ['January','February','March','April','May','June','July','August
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx9E31J4ZiFHFHdkkixAzMQoyc84PsK8a0FPJxV_CwImUEKdj5ahIss77OUtaRkkTqKtw/exec';
 
 async function loadAllData() {
-  const res = await fetch(`${SCRIPT_URL}?action=getAll`);
-  const data = await res.json();
-  written = new Set();
-  notes = {};
-  wordCounts = {};
-  for (const row of (data.entries || [])) {
-    if (row.written === true || row.written === 'TRUE') written.add(row.date);
-    if (row.note) notes[row.date] = row.note;
-    if (row.words) wordCounts[row.date] = Number(row.words);
+  try {
+    const res = await fetch(`${SCRIPT_URL}?action=getAll`, { redirect: 'follow' });
+    const text = await res.text();
+    const data = JSON.parse(text);
+    written = new Set();
+    notes = {};
+    wordCounts = {};
+    for (const row of (data.entries || [])) {
+      if (row.written === true || row.written === 'TRUE') written.add(row.date);
+      if (row.note) notes[row.date] = row.note;
+      if (row.words) wordCounts[row.date] = Number(row.words);
+    }
+  } catch(err) {
+    console.error('loadAllData failed:', err);
   }
 }
 
@@ -330,10 +335,15 @@ async function saveEntry(dateKey) {
     words: wordCounts[dateKey] || 0,
     note: notes[dateKey] || '',
   };
-  await fetch(SCRIPT_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'upsert', entry }),
-  });
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      body: JSON.stringify({ action: 'upsert', entry }),
+    });
+  } catch(err) {
+    console.error('saveEntry failed:', err);
+  }
 }
 // Local state
 let written = new Set();
