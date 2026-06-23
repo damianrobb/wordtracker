@@ -307,36 +307,19 @@ const PALETTES = [
 ];
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-// ── Supabase ──
-const SUPABASE_URL = 'https://xfrkbgkfsubgylyrashs.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhmcmtiZ2tmc3ViZ3lseXJhc2hzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMDg2MzIsImV4cCI6MjA5NTc4NDYzMn0.ep6V2AAMm1C36mefEj5SpiYptiT3PDM0Ro5YVMF3ANI';
-
-async function sbFetch(method, body) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/entries`, {
-    method,
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': `Bearer ${SUPABASE_KEY}`,
-      'Content-Type': 'application/json',
-      'Prefer': method === 'POST' ? 'resolution=merge-duplicates,return=minimal' : 'return=minimal',
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  return res;
-}
+// ── Google Sheets backend ──
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx9E31J4ZiFHFHdkkixAzMQoyc84PsK8a0FPJxV_CwImUEKdj5ahIss77OUtaRkkTqKtw/exec';
 
 async function loadAllData() {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/entries?select=*`, {
-    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-  });
-  const rows = await res.json();
+  const res = await fetch(`${SCRIPT_URL}?action=getAll`);
+  const data = await res.json();
   written = new Set();
   notes = {};
   wordCounts = {};
-  for (const row of rows) {
-    if (row.written) written.add(row.date);
+  for (const row of (data.entries || [])) {
+    if (row.written === true || row.written === 'TRUE') written.add(row.date);
     if (row.note) notes[row.date] = row.note;
-    if (row.words) wordCounts[row.date] = row.words;
+    if (row.words) wordCounts[row.date] = Number(row.words);
   }
 }
 
@@ -347,9 +330,11 @@ async function saveEntry(dateKey) {
     words: wordCounts[dateKey] || 0,
     note: notes[dateKey] || '',
   };
-  await sbFetch('POST', [entry]);
+  await fetch(SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'upsert', entry }),
+  });
 }
-
 // Local state
 let written = new Set();
 let notes = {};
