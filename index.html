@@ -578,8 +578,12 @@ function render(){
       longPressFired = false;
       pressTimer = setTimeout(()=>{
         longPressFired = true;
-        if(activeNoteKey !== null && activeNoteKey !== k){ closeNote(); }
-        openNote(k, `${d} ${MONTHS_SHORT[viewMonth]} ${viewYear}`, p(viewMonth));
+        if(activeNoteKey === k){
+          closeNote(); // already open for this day — close it
+        } else {
+          if(activeNoteKey !== null){ closeNote(); }
+          openNote(k, `${d} ${MONTHS_SHORT[viewMonth]} ${viewYear}`, p(viewMonth));
+        }
       }, 500);
     }
     function cancelPress(){ clearTimeout(pressTimer); pressTimer = null; }
