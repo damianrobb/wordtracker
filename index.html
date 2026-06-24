@@ -321,7 +321,8 @@ async function loadAllData() {
     notes = {};
     wordCounts = {};
     for (const row of (data.entries || [])) {
-      if (row.written === true || row.written === 'TRUE') written.add(row.date);
+      const w = row.written;
+      if (w === true || w === 'TRUE' || w === 'true' || w === 1 || w === '1') written.add(row.date);
       if (row.note) notes[row.date] = row.note;
       if (row.words) wordCounts[row.date] = Number(row.words);
     }
@@ -728,12 +729,15 @@ document.getElementById('word-reset-btn').addEventListener('click', ()=>{
 
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js'); }
 
-// Show loading state then load data
+// Load data then render
 document.getElementById('month-title').textContent = 'Loading…';
 loadAllData().then(() => {
   render();
+  renderStreak(p(viewMonth));
+  updateStats();
+  applyChrome(p(viewMonth));
 }).catch(err => {
-  console.error('Failed to load from Supabase:', err);
+  console.error('Failed to load data:', err);
   render();
 });
 </script>
