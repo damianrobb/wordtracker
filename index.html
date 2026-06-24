@@ -203,7 +203,7 @@
 <body>
 <div class="app">
   <div class="header">
-    <h1>1000 words a day</h1>
+    <h1>Word Tracker</h1>
     <div class="header-badges">
       <div class="month-badge" id="month-badge"></div>
       <button class="year-toggle" id="year-toggle">Year</button>
@@ -569,11 +569,30 @@ function render(){
       cell.appendChild(chk);
     }
 
-    cell.addEventListener('click', ()=>{
-      // If note panel is open for a different day, close it first
-      if(activeNoteKey !== null && activeNoteKey !== k){ closeNote(); }
+    // Long press opens notes (mobile + desktop); quick tap ticks
+    const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    let pressTimer = null;
+    let longPressFired = false;
 
-      // Toggle written
+    function startPress(){
+      longPressFired = false;
+      pressTimer = setTimeout(()=>{
+        longPressFired = true;
+        if(activeNoteKey !== null && activeNoteKey !== k){ closeNote(); }
+        openNote(k, `${d} ${MONTHS_SHORT[viewMonth]} ${viewYear}`, p(viewMonth));
+      }, 500);
+    }
+    function cancelPress(){ clearTimeout(pressTimer); pressTimer = null; }
+
+    // Desktop mouse events
+    cell.addEventListener('mousedown', startPress);
+    cell.addEventListener('mouseup', cancelPress);
+    cell.addEventListener('mouseleave', cancelPress);
+
+    // Quick tap = tick/untick (suppressed if long press fired)
+    cell.addEventListener('click', ()=>{
+      if(longPressFired){ longPressFired = false; return; }
+      if(activeNoteKey !== null && activeNoteKey !== k){ closeNote(); }
       const cp=p(viewMonth);
       if(written.has(k)){ written.delete(k); toast('unmarked',cp); }
       else {
@@ -587,22 +606,10 @@ function render(){
       save(k); render(); renderStreak(p(viewMonth)); updateStats(); applyChrome(p(viewMonth));
     });
 
-    cell.addEventListener('dblclick', (e)=>{
-      e.stopPropagation();
-      const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      openNote(k, `${d} ${MONTHS_SHORT[viewMonth]} ${viewYear}`, p(viewMonth));
-    });
-
-    // Long press for note on mobile
-    let pressTimer;
-    cell.addEventListener('touchstart', ()=>{
-      pressTimer = setTimeout(()=>{
-        const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-        openNote(k, `${d} ${MONTHS_SHORT[viewMonth]} ${viewYear}`, p(viewMonth));
-      }, 500);
-    }, {passive:true});
-    cell.addEventListener('touchend', ()=> clearTimeout(pressTimer), {passive:true});
-    cell.addEventListener('touchmove', ()=> clearTimeout(pressTimer), {passive:true});
+    // Mobile touch events
+    cell.addEventListener('touchstart', startPress, {passive:true});
+    cell.addEventListener('touchend', cancelPress, {passive:true});
+    cell.addEventListener('touchmove', ()=>{ cancelPress(); longPressFired = true; }, {passive:true});
 
     grid.appendChild(cell);
   }
